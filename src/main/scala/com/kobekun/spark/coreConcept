@@ -1,0 +1,70 @@
+核心概念：
+StreamingContext
+
+构造器
+def this(sparkContext: SparkContext, batchDuration: Duration) = {
+    this(sparkContext, null, batchDuration)
+  }
+
+def this(conf: SparkConf, batchDuration: Duration) = {
+    this(StreamingContext.createNewSparkContext(conf), null, batchDuration)
+  }
+
+  batchDuration 可以根据应用程序的延迟需求(接受多长时间的延迟)以及集群可用的资源情况来设置
+
+After a context is defined, you have to do the following.
+
+1、Define the input sources by creating input DStreams.
+2、Define the streaming computations by applying transformation and output operations to DStreams.
+通过将转换和输出操作应用于DStream来定义流式计算。
+3、Start receiving data and processing it using streamingContext.start().
+4、Wait for the processing to be stopped (manually or due to any error) using streamingContext.awaitTermination().
+5、The processing can be manually stopped using streamingContext.stop().
+用streamingContext.awaitTermination（）停止处理（手动或由于任何错误）。
+
+Points to remember:
+1、Once a context has been started, no new streaming computations can be set up or added to it.
+2、Once a context has been stopped, it cannot be restarted.
+3、Only one StreamingContext can be active in a JVM at the same time.
+4、stop() on StreamingContext also stops the SparkContext.
+To stop only the StreamingContext, set the optional parameter of stop()
+called stopSparkContext to false.
+可以分开停streamingContext和sparkContext(需要设置stop中的参数)，可以一块停两者
+5、A SparkContext can be re-used to create multiple StreamingContexts,
+as long as the previous StreamingContext is stopped (without stopping the SparkContext)
+before the next StreamingContext is created.
+
+
+Discretized(离散的) Streams (DStreams)  一系列连续的RDD
+a DStream is represented by a continuous series of RDDs,
+which is Spark’s abstraction of an immutable,
+distributed dataset (see Spark Programming Guide for more details).
+Each RDD in a DStream contains data from a certain interval,
+
+对DStream操作算子，比如map/flatMap，其实底层会被翻译成对DStream的每个RDD都做相同的操作，
+因为一个DStream是由不同批次的RDD构成的。
+
+Input DStreams and Receivers
+Every input DStream (except file stream, discussed later in this section)
+is associated with a Receiver object
+which receives the data from a source and stores it in Spark’s memory for processing
+
+textFileStream返回值是DStream，不需要receiver
+def textFileStream(directory: String): DStream[String] = withNamedScope("text file stream") {
+    fileStream[LongWritable, Text, TextInputFormat](directory).map(_._2.toString)
+  }
+ socketStream的返回值是ReceiverInputDStream，需要receiver
+def socketStream[T: ClassTag](
+        hostname: String,
+        port: Int,
+        converter: (InputStream) => Iterator[T],
+        storageLevel: StorageLevel
+      ): ReceiverInputDStream[T] = {
+      new SocketInputDStream[T](this, hostname, port, converter, storageLevel)
+    }
+
+   如果使用receiver，不能设置主机URL为 "local"或者"local[1]"
+
+    如果receiver是3个话，n必须至少设置4个
+   when running locally, always use “local[n]” as the master URL,
+    where n > number of receivers to run (see Spark Properties for information on how to set the master).
