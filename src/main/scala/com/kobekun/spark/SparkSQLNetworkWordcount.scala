@@ -23,6 +23,7 @@ object SparkSQLNetworkWordcount {
 
     // Convert RDDs of the words DStream to DataFrame and run SQL query
     words.foreachRDD { (rdd: RDD[String], time: Time) =>
+
       val spark = SparkSessionSingleton.getInstance(rdd.sparkContext.getConf)
 
       import spark.implicits._
