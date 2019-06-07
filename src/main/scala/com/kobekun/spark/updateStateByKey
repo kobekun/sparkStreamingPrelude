@@ -1,0 +1,23 @@
+updateStateByKey算子：
+需求：统计到目前为止累计出现的单词的个数(需要保持住以前的状态)
+
+java.lang.IllegalArgumentException: requirement failed:
+The checkpoint directory has not been set. Please set it by StreamingContext.checkpoint().
+	at scala.Predef$.require(Predef.scala:224)
+
+需求：将统计结果写入到mysql中
+
+create table wordcount(
+word varchar(50) default null,
+wordcount int(10) default 0
+);
+
+val sql = "insert into wordcount(word,wordcount) values('"+record._1+"','"+record._2+"');"
+
+存在的问题：
+1) 对已有的数据做更新，而是所有的数据均是insert
+       改进思路：
+            a) 在插入数据前先判断单词是否存在，如果存在就update，不存在则insert
+            b) 工作中：hbase/redis
+
+2) 每个rdd的partition创建connection，建议改成连接池
