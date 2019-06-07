@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming._
 
 /**
+  * 打包到Linux上操作
   * sparksql 和sparkstreaming互操作词频统计
   */
 object SparkSQLNetworkWordcount {
@@ -63,3 +64,14 @@ object SparkSQLNetworkWordcount {
     }
   }
 }
+// DStream -> RDD -> DataFrame(spark sql) -> show |
+//DataFrame
+//+----+-----+
+//|word|total|
+//+----+-----+
+//|   d|    1|
+//|   c|    3|
+//|   b|    2|
+//|   a|    5|
+//|   s|    1|
+//+----+-----+
