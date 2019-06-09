@@ -53,9 +53,11 @@ object FlumePullWordCount {
 
 //push的数据流向：flume(telnet) -> sparkstreaming作业(本地或远程，如果是本地必须配置本地的IP
 // 远程的话需要配置远程IP。无论是远程还是本地，streaming作业都可以被任意终止)
-//pull的数据流向：flume(telnet) -> memory -> sparkstreaming(hostname为flume所在机器的IP，
+//pull的数据流向：flume(telnet) -> custom sink defined by flume conf
+// -> sparkstreaming(hostname为flume所在机器的IP，streaming从自定义的sink中拿数据(pull),
 // 远程上的作业不能被随意终止，除非停止flume agent)
-// -> custom sink defined by flume conf
 
 //push启动顺序：先启动sparkstreaming再启动flume
 //pull启动顺序：先启动flume再启动sparkstreaming作业
+
+//生产上大多数用pull
