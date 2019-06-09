@@ -24,7 +24,8 @@ object FlumePushWordCount {
 
     val Array(hostname,port) = args  //和上面写法一样
 
-    val sparkConf = new SparkConf().setMaster("local[2]").setAppName("FlumePushWordCount")
+    //打包之后不需要后面的，需要在命令中指定
+    val sparkConf = new SparkConf()//.setMaster("local[2]").setAppName("FlumePushWordCount")
 
     val ssc = new StreamingContext(sparkConf,Seconds(10))
 
@@ -52,4 +53,5 @@ object FlumePushWordCount {
 //此处的IP应该配置你本地而不是远程的IP
 
 //服务器上的telnet localhost 44444模拟flume发数据到idea上的作业，
+// (telnet在flume启动之后才能启动，停止之后才能停止)
 // 所以 sink的主机名应该是本地的IP  win上打开cmd  -> ipconfig

@@ -40,3 +40,18 @@ local模式进行streaming代码的测试：IP
 2) 启动flume agent
 3) telnet输入数据，观察idea的输出情况
 
+打包上面项目到服务器上运行
+
+cmd到项目目录下， mvn clean package -DskipTests
+
+打包成功以后 target目录下的jar包移动到服务器上相应的目录，执行下面的命令
+
+./bin/spark-submit \
+  --class com.kobekun.spark.FlumePushWordCount \
+  --master local[2] \
+  --packages org.apache.spark:spark-streaming-flume_2.11:2.2.0 \
+  /home/hadoop/app/submit/sparkStreaming-1.0-SNAPSHOT.jar \
+  hadoop000 41414
+
+  由于打包的东西没有FlumeUtils的依赖，所以执行该类的时候必须加入
+  --packages org.apache.spark:spark-streaming-flume_2.11:2.2.0
