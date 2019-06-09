@@ -1,44 +1,45 @@
-streaming
-push方式整合
-Due to the push model, the streaming application needs to be up
-push模式先启动
-flume push data to sparkstreaming
 
-flume agent的编写：flume_push_streaming.conf
+
+pull方式整合--->
+
+
+flume agent的编写：flume_pull_streaming.conf
 
 simple-agent.sources = netcat-source
-simple-agent.sinks = avro-sink
+simple-agent.sinks = spark-sink
 simple-agent.channels = memory-channel
 
 simple-agent.sources.netcat-source.type = netcat
 simple-agent.sources.netcat-source.bind = hadoop000
 simple-agent.sources.netcat-source.port = 44444
 
-simple-agent.sinks.avro-sink.type = avro
-simple-agent.sinks.avro-sink.hostname = local's ip
-simple-agent.sinks.avro-sink.port = 41414
+simple-agent.sinks.spark-sink.type = org.apache.spark.streaming.flume.sink.SparkSink
+simple-agent.sinks.spark-sink.hostname = hadoop000
+simple-agent.sinks.spark-sink.port = 41414
 
 simple-agent.channels.memory-channel.type = memory
 
 simple-agent.sources.netcat-source.channels = memory-channel
-simple-agent.sinks.avro-sink.channel = memory-channel
+simple-agent.sinks.spark-sink.channel = memory-channel
 
 启动flume：
 
 flume-ng agent  \
 --name simple-agent   \
 --conf $FLUME_HOME/conf    \
---conf-file $FLUME_HOME/conf/flume_push_streaming.conf  \
+--conf-file $FLUME_HOME/conf/flume_pull_streaming.conf  \
 -Dflume.root.logger=INFO,console
 
+Instead of Flume pushing data directly to Spark Streaming,
+this approach runs a custom Flume sink that allows the following.
 
-hadoop000：服务器地址
-local模式进行streaming代码的测试：IP
+1) Flume pushes data into the sink, and the data stays buffered.
+2) Spark Streaming uses a reliable Flume receiver and transactions
+to pull data from the sink. Transactions succeed only after data is
+received and replicated by Spark Streaming.  数据用副本机制存放在机器上以确保数据不丢
 
-本地测试总结：
-1) 启动streaming作业
-2) 启动flume agent
-3) telnet输入数据，观察idea的输出情况
+
+先启动flume再启动streaming
 
 打包上面项目到服务器上运行
 
@@ -47,7 +48,7 @@ cmd到项目目录下， mvn clean package -DskipTests
 打包成功以后 target目录下的jar包移动到服务器上相应的目录，执行下面的命令
 
 ./bin/spark-submit \
-  --class com.kobekun.spark.FlumePushWordCount \
+  --class com.kobekun.spark.FlumePullWordCount \
   --master local[2] \
   --packages org.apache.spark:spark-streaming-flume_2.11:2.2.0 \
   /home/hadoop/app/submit/sparkStreaming-1.0-SNAPSHOT.jar \
@@ -55,3 +56,6 @@ cmd到项目目录下， mvn clean package -DskipTests
 
   由于打包的东西没有FlumeUtils的依赖，所以执行该类的时候必须加入
   --packages org.apache.spark:spark-streaming-flume_2.11:2.2.0
+
+
+
