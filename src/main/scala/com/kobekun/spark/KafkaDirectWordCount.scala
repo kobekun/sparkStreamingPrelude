@@ -6,7 +6,7 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 /**
-  * spark streaming 对接kafka方式 direct
+  * spark streaming 对接kafka方式 direct  工作中常用
   */
 object KafkaDirectWordCount {
 
