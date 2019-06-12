@@ -1,0 +1,72 @@
+streaming.conf
+
+agent1.sources=avro-source
+agent1.channels=logger-channel
+agent1.sinks=log-sink
+
+#define source
+agent1.sources.avro-source.type=avro
+agent1.sources.avro-source.bind=0.0.0.0
+agent1.sources.avro-source.port=41414
+
+#define channel
+agent1.channels.logger-channel=memory
+
+#define sink
+agent1.sinks.log-sink.type=logger
+
+#channel connect sources and sinks
+agent1.sources.avro-source.channels=logger-channel
+agent1.sinks.log-sink.channels=logger-channel
+
+启动flume agent
+
+flume-ng agent \
+--conf $FLUME_HOME/conf \
+--conf-file $FLUME_HOME/conf/streaming.conf \
+--name agent1 \
+-Dflume.root.logger=INFO,console
+
+
+streaming2.conf
+
+agent1.sources=avro-source
+agent1.channels=logger-channel
+agent1.sinks=kafka-sink
+
+#define source
+agent1.sources.avro-source.type=avro
+agent1.sources.avro-source.bind=0.0.0.0
+agent1.sources.avro-source.port=41414
+
+#define channel
+agent1.channels.logger-channel=memory
+
+#define sink
+agent1.sinks.kafka-sink.type=org.apache.flume.sink.kafka.KafkaSink
+agent1.sinks.kafka-sink.topic = streamingkobekuntopic
+agent1.sinks.kafka-sink.brokerList = localhost:9092
+agent1.sinks.kafka-sink.batchSize = 20
+agent1.sinks.kafka-sink.requiredAcks = 1
+
+#channel connect sources and sinks
+agent1.sources.avro-source.channels=logger-channel
+agent1.sinks.log-sink.channels=logger-channel
+
+
+flume-ng agent \
+--conf $FLUME_HOME/conf \
+--conf-file $FLUME_HOME/conf/streaming2.conf \
+--name agent1 \
+-Dflume.root.logger=INFO,console
+
+pom中添加log4jappender
+java.lang.ClassNotFoundException: org.apache.flume.clients.log4jappender.Log4jAppender
+
+生产上的做法：
+1) 打包jar，执行LoggerGenerator类
+2) Flume、kafka和测试时一样
+3) sparkstreaming也需要达成jar包，然后使用spark-submit的方式提交到环境执行，
+可以根据实际情况选择运行模式：local/mesos/yarn/standalone
+
+生产上。整个流处理的流程是一样的，区别在于业务逻辑的复杂性
