@@ -1,0 +1,47 @@
+1、今天到现在为止实战课程的访问量
+2、到现在为止从搜索引擎引流过来的访问量
+
+定时执行：Linux crontab
+
+网址：https://tool.lu/crontab
+
+每一分钟执行一次的crontab表达式： */1 * * * *
+
+vi log_generator.sh
+
+python generate_log.py
+
+*/1 * * * * /home/hadoop/data/project/log_generator.sh
+
+将上面一句 放到 crontab -e 中    每一分钟产生一批日志
+
+
+
+对接Python日志产生器输出的日志到flume
+streaming_project.conf
+
+选型：access.log ==> 控制台输出
+       exec
+       memory
+       logger
+agent:
+       exec-memory-logger.sources = exec-source
+       exec-memory-logger.sinks = logger-sink
+       exec-memory-logger.channels = memory-channel
+
+       exec-memory-logger.sources.exec-source.type = exec
+       exec-memory-logger.sources.exec-source.command = tail -F /home/hadoop/data/project/logs/access.log
+       exec-memory-logger.sources.exec-source.shell = /bin/sh -c
+
+       exec-memory-logger.channels.memory-channel.type = memory
+
+       exec-memory-logger.sinks.logger-sink.type = logger
+
+        exec-memory-logger.sources.exec-source.channels = memory-channel
+        exec-memory-logger.sinks.logger-sink.channels = memory-channel
+
+        flume-ng agent \
+        --conf $FLUME_HOME/conf \
+        --conf-file /home/hadoop/data/project/streaming_project.conf \
+        --name exec-memory-logger \
+        -Dflume.root.logger=INFO,console
