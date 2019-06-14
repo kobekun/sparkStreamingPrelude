@@ -45,3 +45,42 @@ agent:
         --conf-file /home/hadoop/data/project/streaming_project.conf \
         --name exec-memory-logger \
         -Dflume.root.logger=INFO,console
+
+
+日志==>flume==>kafka
+
+对接kafka：
+ 启动zk -> cd $ZK_HOME/bin  ./zkServer.sh start
+ 启动kafka -> cd $KAFKA_HOME/bin ./kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
+ 修改flume配置文件，使flume数据sink到kafka中
+
+streaming_project2.conf
+ agent:
+        exec-memory-kafka.sources = exec-source
+        exec-memory-kafka.sinks = kafka-sink
+        exec-memory-kafka.channels = memory-channel
+
+        exec-memory-kafka.sources.exec-source.type = exec
+        exec-memory-kafka.sources.exec-source.command = tail -F /home/hadoop/data/project/logs/access.log
+        exec-memory-kafka.sources.exec-source.shell = /bin/sh -c
+
+        exec-memory-kafka.channels.memory-channel.type = memory
+
+        exec-memory-kafka.sinks.kafka-sink.type = org.apache.flume.sink.kafka.KafkaSink
+        exec-memory-kafka.sinks.kafka-sink.brokerList = hadoop00:9092
+        exec-memory-kafka.sinks.kafka-sink.topic = streamingtopic
+        exec-memory-kafka.sinks.kafka-sink.batchsize = 5
+        exec-memory-kafka.sinks.kafka-sink.requiredAcks = 1
+
+         exec-memory-kafka.sources.exec-source.channels = memory-channel
+         exec-memory-kafka.sinks.kafka-sink.channels = memory-channel
+
+
+
+        cd $KAFKA_HOME/bin ./kafka-console-consumer.sh --zookeeper hadoop000:2181 --topic streamingtopic
+
+        flume-ng agent \
+                 --conf $FLUME_HOME/conf \
+                 --conf-file /home/hadoop/data/project/streaming_project2.conf \
+                 --name exec-memory-kafka \
+                 -Dflume.root.logger=INFO,console
