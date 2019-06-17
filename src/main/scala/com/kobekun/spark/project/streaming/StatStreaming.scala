@@ -1,10 +1,13 @@
 package com.kobekun.spark.project.streaming
 
-import com.kobekun.spark.project.domain.ClickLog
+import com.kobekun.spark.project.dao.{CourseClickCountDao, CourseSearchClickCountDao}
+import com.kobekun.spark.project.domain.{ClickLog, CourseClickCount, CourseSearchClickCount}
 import com.kobekun.spark.project.utils.TimeUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+import scala.collection.mutable.ListBuffer
 
 object StatStreaming {
 
@@ -19,7 +22,7 @@ object StatStreaming {
 
     val Array(zkQuorum, groupid, topics, numThreads) = args
 
-    val sparkConf = new SparkConf().setAppName("StatStreaming").setMaster("local[2]")
+    val sparkConf = new SparkConf().setAppName("StatStreaming").setMaster("local[4]")
 
     val ssc = new StreamingContext(sparkConf, Seconds(10))
 
@@ -53,7 +56,72 @@ object StatStreaming {
 
     }).filter(clicklog => clicklog.courseId != 0)
 
-    cleanData.print()
+//    cleanData.print()
+
+    //测试三：统计今天到现在为止实战课程的访问量
+
+    cleanData.map(x => {
+
+      (x.time.substring(0,8) + "_" + x.courseId, 1)
+
+    }).reduceByKey(_+_).foreachRDD(rdd => {
+
+      rdd.foreachPartition(partitionRecords => {
+
+        val list = new ListBuffer[CourseClickCount]
+
+        partitionRecords.foreach(pair => {
+
+          list.append(CourseClickCount(pair._1, pair._2))
+
+        })
+
+        CourseClickCountDao.save(list)
+      })
+    })
+
+
+    //测试四：统计今天到现在为止实战课程的搜索引擎过来的访问量
+
+    cleanData.map(x => {
+
+//      把https://www.sogou.com/web?query=Spark Streaming实战 转成
+      //      https:/www.sogou.com/web?query=Spark Streaming实战
+
+      val referer = x.referer.replaceAll("//", "/")
+
+      val splits = referer.split("/")
+
+      var search = ""
+
+      if(splits.length > 2){
+
+        search = splits(1)
+
+      }
+
+      (search, x.courseId, x.time)
+
+    }).filter(x => x._1 != "").map(x =>
+
+      (x._3.substring(0,8) + "_" + x._1 + "_" + x._2, 1)
+
+    ).reduceByKey(_+_).foreachRDD(rdd => {
+
+      rdd.foreachPartition(partitionRecords => {
+
+        val list = new ListBuffer[CourseSearchClickCount]
+
+        partitionRecords.foreach(pair => {
+
+          list.append(CourseSearchClickCount(pair._1, pair._2))
+
+        })
+
+        CourseSearchClickCountDao.save(list)
+      })
+    })
+
 
     ssc.start()
     ssc.awaitTermination()
