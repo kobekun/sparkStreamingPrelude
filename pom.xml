@@ -41,11 +41,11 @@
 
       <!--kafka依赖-->
 
-    <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.11</artifactId>
-        <version>${kafka.version}</version>
-    </dependency>
+<!--    <dependency>-->
+<!--        <groupId>org.apache.kafka</groupId>-->
+<!--        <artifactId>kafka_2.11</artifactId>-->
+<!--        <version>${kafka.version}</version>-->
+<!--    </dependency>-->
 
       <!--hadoop依赖-->
       <dependency>
@@ -96,13 +96,26 @@
         <version>${spark.version}</version>
     </dependency>
 
+    <!-- Spark Streaming整合kafka-->
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming-kafka-0-8_2.11</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+
+
     <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>3.5</version>
     </dependency>
 
-
+    <!--log4j append flume-->
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-clients</groupId>
+      <artifactId>flume-ng-log4jappender</artifactId>
+      <version>1.6.0</version>
+    </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
@@ -124,8 +137,10 @@
   </dependencies>
 
   <build>
+	<!--
     <sourceDirectory>src/main/scala</sourceDirectory>
     <testSourceDirectory>src/test/scala</testSourceDirectory>
+	-->
     <plugins>
       <plugin>
         <groupId>org.scala-tools</groupId>
